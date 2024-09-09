@@ -47,6 +47,13 @@ def get_available_packages():
 def get_shell():
     return "SharaOS Shell"
 
+def get_cpu_info():
+    return f"{psutil.cpu_count(logical=False)} cores, {psutil.cpu_count()} threads"
+
+def get_memory_info():
+    mem = psutil.virtual_memory()
+    return f"{mem.used // (1024 * 1024)}MB / {mem.total // (1024 * 1024)}MB"
+
 def run(sharaos, *args):
     logo = [
         "    ____  _                    ____  ____",
@@ -62,6 +69,8 @@ def run(sharaos, *args):
     info = [
         f"OS: {get_os_name()}",
         f"Uptime: {get_uptime()}",
+        f"CPU: {get_cpu_info()}",
+        f"Memory: {get_memory_info()}",
         f"Installed Packages: {total_installed}",
         f"  Core: {core}",
         f"  User: {user}",
