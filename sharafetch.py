@@ -2,6 +2,9 @@ import platform
 import os
 import subprocess
 import sys
+import time
+from packages.core import update
+from packages.core import amogos
 
 def ensure_psutil():
     try:
@@ -17,13 +20,16 @@ psutil = ensure_psutil()
 def get_os_name():
     return "SharaOS"
 
-def get_kernel():
-    return platform.release()
-
 def get_uptime():
-    return str(int(psutil.boot_time()))
+    boot_time = psutil.boot_time()
+    current_time = time.time()
+    uptime_seconds = int(current_time - boot_time)
+    days, remainder = divmod(uptime_seconds, 86400)
+    hours, remainder = divmod(remainder, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return f"{days}d {hours}h {minutes}m {seconds}s"
 
-def get_packages():
+def get_installed_packages():
     core_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'core')
     user_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'userpacks')
     amogos_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'amogospacks')
@@ -32,13 +38,14 @@ def get_packages():
     user_packages = len([f for f in os.listdir(user_dir) if f.endswith('.py')])
     amogos_packages = len([f for f in os.listdir(amogos_dir) if f.endswith('.py')])
     
-    return f"{core_packages + user_packages + amogos_packages} (core: {core_packages}, user: {user_packages}, amogos: {amogos_packages})"
+    total_installed = core_packages + user_packages + amogos_packages
+    return total_installed, core_packages, user_packages, amogos_packages
+
+def get_available_packages():
+    return len(amogos.list_all_available_packages())
 
 def get_shell():
     return "SharaOS Shell"
-
-def get_resolution():
-    return f"{os.get_terminal_size().columns}x{os.get_terminal_size().lines}"
 
 def run(sharaos, *args):
     logo = [
@@ -49,13 +56,18 @@ def run(sharaos, *args):
         "   |____/|_| |_|\\__,_|_|  \\__,_|\\____/____/"
     ]
 
+    total_installed, core, user, amogos_installed = get_installed_packages()
+    available_packages = get_available_packages()
+
     info = [
         f"OS: {get_os_name()}",
-        f"Kernel: {get_kernel()}",
-        f"Uptime: {get_uptime()} seconds",
-        f"Packages: {get_packages()}",
-        f"Shell: {get_shell()}",
-        f"Resolution: {get_resolution()}"
+        f"Uptime: {get_uptime()}",
+        f"Installed Packages: {total_installed}",
+        f"  Core: {core}",
+        f"  User: {user}",
+        f"  Amogos: {amogos_installed}",
+        f"Available Packages: {available_packages}",
+        f"Shell: {get_shell()}"
     ]
 
     max_length = max(len(line) for line in logo + info)
